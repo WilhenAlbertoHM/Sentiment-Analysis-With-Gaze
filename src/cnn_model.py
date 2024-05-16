@@ -148,37 +148,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# IGNORE THESE TWO
-# MSE: 0.032510820776224136, MAE: 0.1489747166633606 -> 60 timesteps, offset = 1, validation_steps: len(x_test)
-# MSE: ~0.033 -> 30 timesteps, offset = 1, validation_steps: len(x_test) // BATCH_SIZE
-    
-# Check which number of time steps produces smallest MSE.
-# MSE: 0.020820625126361847, MAE: 0.11468666046857834 -> 30 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 64 neurons with dropout 0.2 after
-# MSE: 0.02049286849796772, MAE: 0.1135949194431305 -> 60 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 64 neurons with dropout 0.2 after
-# MSE: 0.021002300083637238, MAE: 0.11509548872709274 -> 90 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 64 neurons with dropout 0.2 after
-# MSE: 0.020903555676341057, MAE: 0.114845871925354 -> 120 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 64 neurons with dropout 0.2 after
-    
-# Once which number of timesteps is good, check which offset is good with 128 neurons on the Dense layer.
-# MSE: 0.020276634022593498, MAE: 0.1126207783818245 -> 60 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 128 neurons with dropout 0.2 after
-# MSE: 0.02066708542406559, MAE: 0.11358554661273956 -> 60 timesteps, offset = 5, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 128 neurons with dropout 0.5 after
-
-# MSE: 0.021044159308075905, MAE: 0.1136929914355278 -> 60 timesteps, offset = 1, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 128 neurons with dropout 0.2 after                 training loss is lower though; MSE 0.0175, MAE 0.103
-# MSE: 0.020571671426296234, MAE: 0.11255370825529099 -> 60 timesteps, offset = 1, validation_steps: len(x_test) // BATCH_SIZE, 
-#                                                       extra Dense layer of 128 neurons with dropout 0.5 after
-
-# ***********
-# Best model so far: 60 timesteps, offset = 5, Dense layer of 128 neurons with dropout 0.2 after, 20 epochs, Adam optimizer with learning rate 0.0001
-# -> MSE: 0.018971968442201614, MAE: 0.10721108317375183
-
-
-# ***********
-# Best model so far: Same setup, but data's values wasn't reduced to less numerical values and got better results??
-# -> MSE: 0.009809075854718685, MAE: 0.07759064435958862
