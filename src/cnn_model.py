@@ -17,7 +17,7 @@ Returns: None.
 """
 def organize_into_time_series(n_steps=30):
     # Load the data.
-    data = np.genfromtxt("csv_files/gaze_rotation_and_scores_data_cleaned.csv", delimiter=",")
+    data = np.genfromtxt("csv_files/cleaned_data_use_this.csv", delimiter=",")
     
     # For NaN values, replace them with the average of the column.
     mean_values = np.nanmean(data, axis=0)
@@ -74,20 +74,16 @@ def main():
     print(f"Y shape: {y.shape}")
 
     # Split the data into training and testing sets.
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42, shuffle=True)
 
-    # Further split the training set into training and validation sets.
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=42)
+    # Split the training data into training and validation sets.
+    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=42, shuffle=True)
 
     # Scale the data.
     scaler = MinMaxScaler()
     x_train = scaler.fit_transform(x_train.reshape(-1, x_train.shape[-1])).reshape(x_train.shape)
     x_test = scaler.transform(x_test.reshape(-1, x_test.shape[-1])).reshape(x_test.shape)
     x_val = scaler.transform(x_val.reshape(-1, x_val.shape[-1])).reshape(x_val.shape)
-
-    # Get the timesteps (30), number of features (13), and number of labels (5).
-    n_timesteps, n_features = x.shape[1], x.shape[2]
-    n_labels = y.shape[1]
     
     # Create the train and test datasets.
     buffer_size = 60_000
@@ -95,16 +91,20 @@ def main():
     train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(buffer_size).batch(batch_size).repeat()
     val_data = tf.data.Dataset.from_tensor_slices((x_val, y_val)).shuffle(buffer_size).batch(batch_size).repeat()
 
+    # Get the timesteps (30), number of features (13), and number of labels (5).
+    n_timesteps, n_features = x.shape[1], x.shape[2]
+    n_labels = y.shape[1]
+
     # Create the model.
     model = Sequential()
     model.add(Input(shape=(n_timesteps, n_features)))
-    model.add(Conv1D(filters=128, kernel_size=15, activation="relu"))
+    model.add(Conv1D(filters=128, kernel_size=3, activation="relu"))
     model.add(Dropout(0.5))
     model.add(MaxPooling1D(pool_size=2))
     model.add(Flatten())
     model.add(Dense(units=128, activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(units=n_labels, activation="tanh"))
+    model.add(Dropout(0.3))
+    model.add(Dense(units=n_labels, activation="relu"))
     model.summary()
     
     # Compile and train the model.
@@ -113,33 +113,33 @@ def main():
     model.compile(optimizer=optimizer, loss="mse", metrics=["mae"])    
     history = model.fit(train_data, 
                         steps_per_epoch=len(x_train) // batch_size, 
-                        epochs=20, 
-                        validation_data=val_data, 
+                        epochs=10, 
+                        validation_data=val_data,
                         validation_steps=len(x_val) // batch_size,
                         callbacks=[es])
 
     # Evaluate the model.
     mse, mae = model.evaluate(x_test, y_test)
     print(f"MSE: {mse}")
-    print(f"MAE: {mae}") 
+    print(f"MAE: {mae}")
 
     # Predict the labels.
     y_pred = model.predict(x_test)
+    y_diff = np.abs(np.subtract(y_pred, y_test))
+    y_diff_avg = np.mean(y_diff, axis=0)
     print(f"y_pred:\n {y_pred}")
     print(f"y_test:\n {y_test}")
-    print(f"y_pred - y_test:\n {np.abs(np.subtract(y_pred, y_test))}")
-
-    # Plot the predictions against test.
-    plt.scatter(y_test, y_pred, color="green")
-    plt.xlabel("True Values")
-    plt.ylabel("Predictions")
-    plt.show()
+    print(f"y_pred - y_test:\n {y_diff}")
+    print(f"y_diff_avg:\n {y_diff_avg}")
 
     # Plot training and testing loss
-    plt.plot(history.history["loss"], label="train_loss")
-    plt.plot(history.history["val_loss"], label="test_loss")
-    plt.plot(history.history["mae"], label="train_mae")
-    plt.plot(history.history["val_mae"], label="test_mae")
+    plt.title("Training and Testing Loss - MAE and MSE")
+    plt.xlabel("Number of Epochs")
+    plt.ylabel("Loss")
+    plt.plot(history.history["val_mae"], label="MAE Valid", color="red")
+    plt.plot(history.history["mae"], label="MAE Train", color="blue")
+    plt.plot(history.history["val_loss"], label="MSE Valid", color="orange")
+    plt.plot(history.history["loss"], label="MSE Train", color="green")
     plt.legend()
     plt.show()
 
